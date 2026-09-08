@@ -1,0 +1,1 @@
+psql|pgcli|pg_dump|pg_restore|PGPASSWORD|postgres(ql)?://|git( +-C +[^ ]+)? +(commit|push)|glab +mr|jest|vitest|playwright|docker +(build|compose)|kind +(create|load)|run +build|tsc +-b|corp-claude|codex +exec|kubectl +exec

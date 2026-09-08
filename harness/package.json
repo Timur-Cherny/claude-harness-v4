@@ -1,0 +1,12 @@
+{
+  "name": "claude-harness-v4",
+  "private": true,
+  "type": "module",
+  "description": "Детерминированный слой харнесса Claude Code: TypeScript под Node 24, без сборки и без node_modules.",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "test": "node --test --test-concurrency=4 'test/**/*.test.ts'",
+    "test:bench": "HARNESS_BENCH=1 node --test test/bench/latency.test.ts",
+    "test:linux": "sh scripts/test-linux.sh"
+  }
+}

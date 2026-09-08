@@ -1,0 +1,25 @@
+{
+  "_comment": "Блок hooks для ~/.claude/settings.json на шаге cut-over (ADR_HARNESS_V4_TS_NODE24 §Форма контура). Команда — только shell-форма bin/hook <event>; префильтр pre-bash живёт в шиме, поле if не фильтрует (проба 05.09). Порядок событий — как в src/types.ts HarnessEvent.",
+  "hooks": {
+    "SessionStart":       [{ "hooks": [{ "type": "command", "command": "\"$HOME\"/.claude/harness/bin/hook session-start", "timeout": 30 }] }],
+    "SessionEnd":         [{ "hooks": [{ "type": "command", "command": "\"$HOME\"/.claude/harness/bin/hook session-end", "timeout": 10 }] }],
+    "UserPromptSubmit":   [{ "hooks": [{ "type": "command", "command": "\"$HOME\"/.claude/harness/bin/hook prompt", "timeout": 10 }] }],
+    "PreToolUse": [
+      { "matcher": "Agent|Task|Workflow",    "hooks": [{ "type": "command", "command": "\"$HOME\"/.claude/harness/bin/hook pre-agent", "timeout": 15 }] },
+      { "matcher": "Edit|Write|NotebookEdit", "hooks": [{ "type": "command", "command": "\"$HOME\"/.claude/harness/bin/hook pre-write", "timeout": 10 }] },
+      { "matcher": "Bash",                   "hooks": [{ "type": "command", "command": "\"$HOME\"/.claude/harness/bin/hook pre-bash", "timeout": 300 }] }
+    ],
+    "PostToolUse": [
+      { "matcher": "Bash|Edit|Write|NotebookEdit|Workflow", "hooks": [{ "type": "command", "command": "\"$HOME\"/.claude/harness/bin/hook post", "timeout": 60 }] },
+      { "matcher": "mcp__.*",                             "hooks": [{ "type": "command", "command": "\"$HOME\"/.claude/harness/bin/hook post", "timeout": 60 }] }
+    ],
+    "PostToolUseFailure": [
+      { "matcher": "Bash|Edit|Write|NotebookEdit|Workflow", "hooks": [{ "type": "command", "command": "\"$HOME\"/.claude/harness/bin/hook post", "timeout": 60 }] },
+      { "matcher": "mcp__.*",                             "hooks": [{ "type": "command", "command": "\"$HOME\"/.claude/harness/bin/hook post", "timeout": 60 }] }
+    ],
+    "SubagentStart":      [{ "hooks": [{ "type": "command", "command": "\"$HOME\"/.claude/harness/bin/hook agent-start", "timeout": 15 }] }],
+    "SubagentStop":       [{ "hooks": [{ "type": "command", "command": "\"$HOME\"/.claude/harness/bin/hook agent-stop", "timeout": 30 }] }],
+    "Stop":               [{ "hooks": [{ "type": "command", "command": "\"$HOME\"/.claude/harness/bin/hook stop", "timeout": 180 }] }],
+    "PreCompact":         [{ "hooks": [{ "type": "command", "command": "\"$HOME\"/.claude/harness/bin/hook precompact", "timeout": 30 }] }]
+  }
+}

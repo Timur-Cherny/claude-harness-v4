@@ -1,0 +1,15 @@
+{
+  "_comment": "Конфиг площадки. Скопируй в ~/.claude/harness.config.json и правь под себя, либо укажи путь через CLAUDE_HARNESS_CONFIG. Файла нет — контур работает на дженерик-дефолтах: защищена ветка main, напоминание о work-doc молчит, дефолтного вольта нет. Контракт и разбор полей: src/config.ts.",
+
+  "_protectedBranches": "Ветки, прямой push и MR в которые разрешены только с release/* или hotfix/*. Дефолт: [\"main\"]. Переопределяется на один вызов через env PREPUSH_PROTECTED (список через запятую).",
+  "protectedBranches": ["main"],
+
+  "_vaultRel": "Путь вольта относительно $HOME — куда git-freshness смотрит, когда явных env (WMS_VAULT и прочих) нет. Не задан — дефолтного вольта нет, проверяются только явные пути.",
+  "vaultRel": "Documents/vault",
+
+  "_workDocs": "Напоминание зафиксировать объяснение как work-doc. cwd — regex по пути репозитория, text — текст целиком. Блока нет — гейт work-docs-reminder молчит всегда.",
+  "workDocs": {
+    "cwd": "(my-service|my-frontend)",
+    "text": "[work-docs reminder] Похоже, речь про важное поведение системы. Если это заземлённое на код объяснение — зафиксируй его как work-doc, не только в чате."
+  }
+}

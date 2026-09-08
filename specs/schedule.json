@@ -1,0 +1,56 @@
+{
+  "_": "Желаемая каденция обязательных прогонов. Триггер — накопление данных; часы только потолок и пол.",
+  "_signals": "Считаются в scripts/due.sh. Порог delta — прирост сигнала с прошлого отмеченного прогона.",
+  "_contract": {
+    "due": "delta >= trigger.delta ЛИБО дней с якоря >= max_interval_days",
+    "held": "назрело, но с прошлого прогона меньше min_interval_days (защита от пережога токенов)",
+    "ok": "ниже порога И прогон отмечен И не просрочен по max_interval_days",
+    "unknown": "прогон никогда не отмечался либо источник сигнала отсутствует. НЕ ok."
+  },
+  "rules": [
+    {
+      "id": "memory-review",
+      "command": "/memory-review",
+      "signal": "memory_notes",
+      "trigger": {
+        "delta": 25
+      },
+      "min_interval_days": 5,
+      "max_interval_days": 21,
+      "why": "нот накопилось столько, что индекс и статусы успевают протухнуть"
+    },
+    {
+      "id": "friction-review",
+      "command": "/friction-review",
+      "signal": "friction_events",
+      "trigger": {
+        "delta": 20
+      },
+      "min_interval_days": 3,
+      "max_interval_days": 14,
+      "why": "повтор причины считается, а не оценивается. Порог пересчитан 02.09 под другую популяцию: легаси-стор нёс 2505 записей, рабочий — десятки."
+    },
+    {
+      "id": "ai-usage",
+      "command": "/ai-usage",
+      "signal": "ai_usage_events",
+      "trigger": {
+        "delta": 250
+      },
+      "min_interval_days": 7,
+      "max_interval_days": 30,
+      "why": "раздача задач исполнителям сверяется со скоубордом, скоуборд живой"
+    },
+    {
+      "id": "worklog",
+      "command": "/worklog",
+      "signal": "commits_logged",
+      "trigger": {
+        "delta": 60
+      },
+      "min_interval_days": 7,
+      "max_interval_days": 31,
+      "why": "месячный отчёт; коммиты копит хук, разложить по задачам может только сессия"
+    }
+  ]
+}

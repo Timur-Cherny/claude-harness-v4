@@ -1,0 +1,87 @@
+#!/bin/sh
+# harness v4 — единственная точка входа из settings.json.
+# Делает ровно три вещи: пинует Node >= 24 отдельно от рантайма проекта, включает
+# NODE_COMPILE_CACHE и отсекает pre-bash без слов-триггеров, не запуская Node.
+# Гейтов здесь нет. Kill-switch'и читает роутер. Контракт — harness/test/shim.test.ts.
+set -u
+ev="${1:-}"
+self="$0"
+while [ -L "$self" ]; do
+  link="$(readlink "$self")"
+  case "$link" in /*) self="$link" ;; *) self="$(dirname "$self")/$link" ;; esac
+done
+root="$(cd "$(dirname "$self")/.." && pwd -P)"
+state="${CLAUDE_STATE_DIR:-$HOME/.claude/exec-telemetry}"
+
+# Префильтр: поле `if` в settings.json не фильтрует (проба 05.09), поэтому pre-bash
+# приходит на КАЖДЫЙ Bash-вызов. Промах по словам-триггерам — выход за 3 мс без Node.
+# Ложное срабатывание стоит один запуск Node; пропуск возможен лишь при обфускации,
+# которую и токенизатор роутера не разбирает. Список — bin/prefilter.regex, он же
+# экспортируется из src/gates/prefilters.ts; равенство держит meta/prefilter.test.ts.
+if [ "$ev" = "pre-bash" ]; then
+  payload="$(cat)"
+  printf '%s' "$payload" | grep -qE "$(cat "$root/bin/prefilter.regex")" || exit 0
+fi
+
+# harness.env читается и тогда, когда Node уже пинован окружением: в том же файле лежит пин
+# CLAUDE_HARNESS_TS, и он не экспортировался НИКОГДА — структурные проверки (comment-bloat, язык
+# комментариев, tripwire) отвечали unknown в каждой живой сессии, а выглядело это как норма.
+# Пин из окружения остаётся главнее файла: тесты подставляют свой node именно так.
+env_node="${CLAUDE_HARNESS_NODE:-}"
+env_ts="${CLAUDE_HARNESS_TS:-}"
+if [ -f "$HOME/.claude/env/harness.env" ] && { [ -z "$env_node" ] || [ -z "$env_ts" ]; }; then
+  # shellcheck disable=SC1090
+  . "$HOME/.claude/env/harness.env"
+  [ -n "$env_node" ] && CLAUDE_HARNESS_NODE="$env_node"
+  [ -n "$env_ts" ] && CLAUDE_HARNESS_TS="$env_ts"
+fi
+[ -n "${CLAUDE_HARNESS_TS:-}" ] && export CLAUDE_HARNESS_TS
+
+node_bin=""
+if [ -n "${CLAUDE_HARNESS_NODE:-}" ] && [ -x "${CLAUDE_HARNESS_NODE}" ]; then
+  node_bin="$CLAUDE_HARNESS_NODE"
+fi
+if [ -z "$node_bin" ]; then
+  # nvm: старшая версия по ЧИСЛЕННОМУ сравнению — лексикографически v24.9 > v24.20.
+  best=0
+  for cand in "$HOME"/.nvm/versions/node/v*/bin/node; do
+    [ -x "$cand" ] || continue
+    ver="${cand#*/versions/node/v}"; ver="${ver%%/*}"
+    maj="${ver%%.*}"; rest="${ver#*.}"; min="${rest%%.*}"; pat="${rest#*.}"
+    case "$maj$min$pat" in *[!0-9]*) continue ;; esac
+    [ "$maj" -ge 24 ] || continue
+    key=$(( maj * 1000000 + min * 1000 + pat ))
+    if [ "$key" -gt "$best" ]; then best=$key; node_bin="$cand"; fi
+  done
+fi
+if [ -z "$node_bin" ] && command -v node >/dev/null 2>&1; then
+  pmaj="$(node -v 2>/dev/null | sed -E 's/^v([0-9]+).*/\1/')"
+  case "$pmaj" in *[!0-9]*|'') ;; *) [ "$pmaj" -ge 24 ] && node_bin="$(command -v node)" ;; esac
+fi
+
+if [ -z "$node_bin" ]; then
+  # Рантайма нет = данных нет: на pre-событиях это ask с причиной (I1), не тишина.
+  reason="harness inactive: Node >= 24 не найден — запусти harness/install.sh или задай CLAUDE_HARNESS_NODE"
+  case "$ev" in
+    pre-*)
+      if [ "${CLAUDE_HARNESS_UNKNOWN:-}" = "note" ]; then
+        printf '{"hookSpecificOutput":{"hookEventName":"PreToolUse","additionalContext":"%s"}}' "$reason"
+      else
+        printf '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"ask","permissionDecisionReason":"%s"}}' "$reason"
+      fi ;;
+    session-start|stop)
+      marker="$state/markers/runtime-missing-${CLAUDE_HARNESS_SESSION:-any}"
+      if [ ! -f "$marker" ]; then
+        mkdir -p "$state/markers" 2>/dev/null && : > "$marker"
+        printf '{"systemMessage":"%s"}' "$reason"
+      fi ;;
+  esac
+  exit 0
+fi
+
+export NODE_COMPILE_CACHE="$state/compile-cache" HARNESS_ROOT="$root"
+if [ "$ev" = "pre-bash" ]; then
+  printf '%s' "$payload" | "$node_bin" --disable-warning=ExperimentalWarning "$root/src/main.ts" "$ev"
+  exit $?
+fi
+exec "$node_bin" --disable-warning=ExperimentalWarning "$root/src/main.ts" "$ev"

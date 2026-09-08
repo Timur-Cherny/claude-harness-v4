@@ -1,0 +1,4 @@
+# зависимости MCP-серверов и прочий рантайм
+node_modules/
+.DS_Store
+**/.DS_Store

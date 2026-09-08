@@ -1,0 +1,7 @@
+#!/bin/sh
+# Repo-level вход харнесса v4 (zero-install для клона вольта). Если на машине стоит user-level харнесс
+# (~/.claude/harness/bin/hook), он уже получает это событие через ~/.claude/settings.json — выходим за 2–3 мс,
+# чтобы не запускать роутер дважды (дубль на tool-событиях и так гасит claim по tool_use_id).
+[ -x "$HOME/.claude/harness/bin/hook" ] && exit 0
+here="$(cd "$(dirname "$0")/../.." && pwd -P)"
+exec "$here/harness/bin/hook" "$@"

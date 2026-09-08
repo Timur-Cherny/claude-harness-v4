@@ -1,0 +1,14 @@
+{
+  "package": "@supabase/pg-parser",
+  "version": "0.1.7",
+  "license": "MIT",
+  "source": "https://github.com/supabase-community/pg-parser",
+  "command": "node scripts/vendor.ts <node_modules/@supabase/pg-parser>",
+  "files": {
+    "vendor/pg-parser/dist/index.cjs": "4c36cf3c6de7a6d7b02d38c040252692abf944e45d5058804be52ec40a6fdebe",
+    "vendor/pg-parser/dist/index.d.cts": "6846a423980808269e2ff9e0b05444979cc628ac7d276a16fe069d4df81d73f1",
+    "vendor/pg-parser/wasm/17/pg-parser.js": "2a504ed174e6113af9cb3b8ac5e5fb29969e2f8aad8dde3398cb0c5c8963c1b7",
+    "vendor/pg-parser/wasm/17/pg-parser.wasm": "716365ffeed7143be5139f9fe9978dfc00f18f5de441973620a9c65533f119d7",
+    "vendor/pg-parser/LICENSE": "648c39285204f79e1bbb6e917d010a5a48fbc92fe682ea08d2ad1ce75e3e6fd5"
+  }
+}
